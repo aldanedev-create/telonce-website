@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teloce - Template Engine for Python Web Developers</title>
+    <meta name="description" content="A TypeScript template engine for Python web developers. Works with Flask, Django, FastAPI, and more." />
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico" />
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Vue 3 (CDN) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Custom CSS (minimal, only if needed) -->
+    <style>
+        /* ── Reset & Base ── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #ffffff;
+            color: #111827;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ── Dark Mode ── */
+        body.dark {
+            background-color: #111827;
+            color: #f9fafb;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        .dark ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        /* ── Code Block Styling ── */
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            color: #e2e8f0;
+        }
+
+        .dark pre {
+            background: #0f172a;
+        }
+
+        /* ── Inline Code ── */
+        code:not(pre code) {
+            background: #f1f5f9;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.875em;
+            color: #0f172a;
+        }
+
+        .dark code:not(pre code) {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        /* ── Syntax Highlighting (minimal) ── */
+        .token.comment {
+            color: #94a3b8;
+        }
+        .token.keyword {
+            color: #c084fc;
+        }
+        .token.string {
+            color: #34d399;
+        }
+        .token.function {
+            color: #60a5fa;
+        }
+        .token.number {
+            color: #fbbf24;
+        }
+        .token.operator {
+            color: #f472b6;
+        }
+        .token.tag {
+            color: #f87171;
+        }
+        .token.attr-name {
+            color: #fcd34d;
+        }
+        .token.attr-value {
+            color: #34d399;
+        }
+        .token.selector {
+            color: #34d399;
+        }
+        .token.property {
+            color: #60a5fa;
+        }
+        .token.value {
+            color: #fbbf24;
+        }
+        .token.variable {
+            color: #f472b6;
+        }
+        .token.doctype {
+            color: #94a3b8;
+        }
+        .token.command {
+            color: #60a5fa;
+        }
+        .token.flag {
+            color: #fbbf24;
+        }
+        .token.key {
+            color: #f472b6;
+        }
+        .token.boolean {
+            color: #34d399;
+        }
+        .token.null {
+            color: #94a3b8;
+        }
+        .token.diff-add {
+            color: #34d399;
+        }
+        .token.diff-remove {
+            color: #f87171;
+        }
+        .token.diff-header {
+            color: #60a5fa;
+        }
+
+        /* ── Smooth Transitions ── */
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.25s ease;
+        }
+        .fade-enter-from,
+        .fade-leave-to {
+            opacity: 0;
+        }
+
+        .slide-enter-active,
+        .slide-leave-active {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .slide-enter-from {
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+        .slide-leave-to {
+            transform: translateX(20px);
+            opacity: 0;
+        }
+
+        /* ── Responsive Container ── */
+        .container-custom {
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .container-custom {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container-custom {
+                padding-left: 3rem;
+                padding-right: 3rem;
+            }
+        }
+
+        /* ── Gradient Text ── */
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ── Docs Content ── */
+        .docs-content h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            letter-spacing: -0.025em;
+            color: #111827;
+        }
+
+        .dark .docs-content h1 {
+            color: #f9fafb;
+        }
+
+        .docs-content h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.025em;
+            color: #111827;
+        }
+
+        .dark .docs-content h2 {
+            color: #f9fafb;
+        }
+
+        .docs-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .dark .docs-content h3 {
+            color: #f9fafb;
+        }
+
+        .docs-content h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .dark .docs-content h4 {
+            color: #f9fafb;
+        }
+
+        .docs-content p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+            color: #4b5563;
+        }
+
+        .dark .docs-content p {
+            color: #d1d5db;
+        }
+
+        .docs-content ul,
+        .docs-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .docs-content ul li,
+        .docs-content ol li {
+            margin-bottom: 0.25rem;
+            line-height: 1.8;
+            color: #4b5563;
+        }
+
+        .dark .docs-content ul li,
+        .dark .docs-content ol li {
+            color: #d1d5db;
+        }
+
+        .docs-content ul {
+            list-style: disc;
+        }
+
+        .docs-content ol {
+            list-style: decimal;
+        }
+
+        .docs-content a {
+            color: #6366f1;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .docs-content a:hover {
+            color: #4f46e5;
+        }
+
+        .dark .docs-content a {
+            color: #818cf8;
+        }
+
+        .dark .docs-content a:hover {
+            color: #6366f1;
+        }
+
+        /* ── Prose Tables ── */
+        .docs-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+        }
+
+        .docs-content table thead {
+            background: #f1f5f9;
+        }
+
+        .dark .docs-content table thead {
+            background: #1e293b;
+        }
+
+        .docs-content table th {
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+            color: #111827;
+        }
+
+        .dark .docs-content table th {
+            color: #f9fafb;
+            border-color: #334155;
+        }
+
+        .docs-content table td {
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+            color: #4b5563;
+        }
+
+        .dark .docs-content table td {
+            color: #d1d5db;
+            border-color: #334155;
+        }
+
+        /* ── Blockquote ── */
+        .docs-content blockquote {
+            border-left: 4px solid #6366f1;
+            padding: 0.75rem 1.25rem;
+            margin: 1.5rem 0;
+            background: #f8fafc;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .dark .docs-content blockquote {
+            background: #1e293b;
+        }
+
+        .docs-content blockquote p {
+            margin-bottom: 0;
+        }
+
+        /* ── Docs Sidebar Scroll ── */
+        .sidebar-scroll {
+            max-height: calc(100vh - 8rem);
+            overflow-y: auto;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 2px;
+        }
+
+        .dark .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #4b5563;
+        }
+
+        /* ── Mobile Menu Overlay ── */
+        .mobile-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ── Misc ── */
+        .no-scroll {
+            overflow: hidden;
+        }
+
+        .transition-theme {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* ── Prose Images ── */
+        .docs-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        /* ── Horizontal Rule ── */
+        .docs-content hr {
+            margin: 2rem 0;
+            border: 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .dark .docs-content hr {
+            border-top-color: #334155;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Router View -->
+        <router-view></router-view>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>
