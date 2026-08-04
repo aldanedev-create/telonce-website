@@ -593,4 +593,4 @@ window.__TELOCE_DOCS_NAV = buildNav();
 // Export for use in other files
 export { docsData, searchIndex, buildSearchIndex, buildNav };
 
-export { DocsPage };
+export { Docs };
