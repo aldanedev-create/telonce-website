@@ -75,3 +75,5 @@ const HeroComponent = {
         </section>
     `,
 };
+
+export { HeroComponent };

@@ -44,3 +44,5 @@ const NotFoundPage = {
     },
     emits: ['toggle-theme', 'toggle-mobile', 'toggle-search'],
 };
+
+export { NotFoundPage };

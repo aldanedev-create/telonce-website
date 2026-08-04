@@ -43,3 +43,5 @@ const DocsLayoutComponent = {
     },
     emits: ['close-mobile'],
 };
+
+export { DocsLayoutComponent };

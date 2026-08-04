@@ -37,3 +37,5 @@ const HomePage = {
     },
     emits: ['toggle-theme', 'toggle-mobile', 'toggle-search'],
 };
+
+export { HomePage };

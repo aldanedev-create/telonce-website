@@ -28,3 +28,5 @@ const ThemeToggleComponent = {
         },
     },
 };
+
+export { ThemeToggleComponent };

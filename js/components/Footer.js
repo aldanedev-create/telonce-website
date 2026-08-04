@@ -93,3 +93,5 @@ const FooterComponent = {
         };
     },
 };
+
+export { FooterComponent };

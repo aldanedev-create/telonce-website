@@ -119,3 +119,5 @@ const CommunityPage = {
     },
     emits: ['toggle-theme', 'toggle-mobile', 'toggle-search'],
 };
+
+export { CommunityPage };

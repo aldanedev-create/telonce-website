@@ -101,3 +101,5 @@ const SidebarComponent = {
         },
     },
 };
+
+export { SidebarComponent };

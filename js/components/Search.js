@@ -202,3 +202,5 @@ const SearchComponent = {
         },
     },
 };
+
+export { SearchComponent };

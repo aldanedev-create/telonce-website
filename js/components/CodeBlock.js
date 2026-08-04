@@ -181,3 +181,6 @@ const CodeBlockComponent = {
         },
     },
 };
+
+
+export { CodeBlockComponent};

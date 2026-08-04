@@ -66,3 +66,5 @@ const TestimonialsComponent = {
         };
     },
 };
+
+export { TestimonialsComponent };

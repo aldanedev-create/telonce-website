@@ -29,3 +29,6 @@ const CTASectionComponent = {
         </section>
     `,
 };
+
+
+export { CTASectionComponent };

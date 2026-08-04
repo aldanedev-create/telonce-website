@@ -95,3 +95,6 @@ const MobileMenuComponent = {
         },
     },
 };
+
+
+export { MobileMenuComponent };

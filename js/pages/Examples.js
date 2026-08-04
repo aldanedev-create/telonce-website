@@ -179,3 +179,5 @@ const ExamplesPage = {
         },
     },
 };
+
+export { ExamplesPage };

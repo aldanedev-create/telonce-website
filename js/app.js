@@ -1,15 +1,27 @@
 /**
  * Teloce Website - Vue 3 Application
- * 
- * SPA with Vue 3 CDN, Tailwind CSS, and hash-based routing
  */
 
 const { createApp, ref, computed, watch, onMounted, createRouter, createWebHashHistory } = Vue;
 
-// Data for docs
-import './data/docs.js';
+// ─── IMPORT ALL PAGES ──────────────────────────────────────────────
 
-// ─── Router ──────────────────────────────────────────────────────
+// You need to import all page components
+import { HomePage } from './pages/Home.js';
+import { DocsPage } from './pages/Docs.js';
+import { BlogPage } from './pages/Blog.js';
+import { BlogPostPage } from './pages/BlogPost.js';
+import { CommunityPage } from './pages/Community.js';
+import { ExamplesPage } from './pages/Examples.js';
+import { PlaygroundPage } from './pages/Playground.js';
+import { NotFoundPage } from './pages/NotFound.js';
+
+// ─── IMPORT ALL COMPONENTS ──────────────────────────────────────────
+
+// Import components (if you're using them in app.js)
+// Note: Components are registered globally, not imported here
+
+// ─── ROUTER ──────────────────────────────────────────────────────────
 
 const routes = [
     { path: '/', component: HomePage },
@@ -19,7 +31,7 @@ const routes = [
     { path: '/blog/:slug', component: BlogPostPage },
     { path: '/community', component: CommunityPage },
     { path: '/community/:page', component: CommunityPage },
-    { path: '/examples', component: ExamplesPage },  // ← NEW ROUTE
+    { path: '/examples', component: ExamplesPage },
     { path: '/playground', component: PlaygroundPage },
     { path: '/:pathMatch(.*)*', component: NotFoundPage },
 ];
@@ -35,7 +47,7 @@ const router = createRouter({
     },
 });
 
-// ─── Global State ──────────────────────────────────────────────
+// ─── GLOBAL STATE ──────────────────────────────────────────────────
 
 const appState = {
     theme: ref('light'),
@@ -46,7 +58,7 @@ const appState = {
     isSearching: ref(false),
 };
 
-// ─── Theme Management ──────────────────────────────────────────
+// ─── THEME MANAGEMENT ──────────────────────────────────────────────
 
 function initTheme() {
     const saved = localStorage.getItem('teloce-theme');
@@ -70,13 +82,11 @@ function toggleTheme() {
     applyTheme(newTheme);
 }
 
-// ─── Watch Theme ──────────────────────────────────────────────
-
 watch(() => appState.theme.value, (newTheme) => {
     applyTheme(newTheme);
 });
 
-// ─── App ────────────────────────────────────────────────────────
+// ─── APP ────────────────────────────────────────────────────────────
 
 const app = createApp({
     setup() {
@@ -96,7 +106,10 @@ const app = createApp({
     },
 });
 
-// ─── Global Components ─────────────────────────────────────────
+// ─── GLOBAL COMPONENTS ─────────────────────────────────────────────
+
+// Your components need to be defined BEFORE registering them
+// Make sure each component file is loaded correctly
 
 app.component('AppHeader', HeaderComponent);
 app.component('AppFooter', FooterComponent);
@@ -112,11 +125,11 @@ app.component('AppCodeBlock', CodeBlockComponent);
 app.component('AppThemeToggle', ThemeToggleComponent);
 app.component('AppMobileMenu', MobileMenuComponent);
 
-// ─── Mount ──────────────────────────────────────────────────────
+// ─── MOUNT ──────────────────────────────────────────────────────────
 
 app.use(router);
 app.mount('#app');
 
-// ─── Exports ────────────────────────────────────────────────────
+// ─── EXPORTS ──────────────────────────────────────────────────────
 
 export { app, router, appState, toggleTheme };

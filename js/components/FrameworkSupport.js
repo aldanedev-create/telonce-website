@@ -44,3 +44,5 @@ const FrameworkSupportComponent = {
         };
     },
 };
+
+export { FrameworkSupportComponent };

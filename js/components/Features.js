@@ -68,3 +68,6 @@ const FeaturesComponent = {
         };
     },
 };
+
+
+export { FeaturesComponent };
