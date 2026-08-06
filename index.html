@@ -10,8 +10,11 @@
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-    <!-- Vue 3 (CDN) -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Vue 3 (CDN, production build) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+    <!-- Vue Router 4 (CDN) -->
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -467,7 +470,19 @@
 <body>
     <div id="app">
         <!-- Router View -->
-        <router-view></router-view>
+        <router-view
+            :theme="theme"
+            @toggle-theme="toggleTheme"
+            @toggle-mobile="mobileMenuOpen = ($event === false ? false : !mobileMenuOpen)"
+        ></router-view>
+
+        <!-- Site-wide Mobile Nav Menu (docs pages use their own sidebar drawer instead) -->
+        <app-mobile-menu
+            :is-open="mobileMenuOpen"
+            :theme="theme"
+            @toggle="mobileMenuOpen = !mobileMenuOpen"
+            @toggle-theme="toggleTheme"
+        />
     </div>
 
     <!-- Application JavaScript -->

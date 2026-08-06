@@ -20,7 +20,8 @@ const HeaderComponent = {
                         </router-link>
                         <router-link to="/blog" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" active-class="text-indigo-600 dark:text-indigo-400">
                             Blog
-                            <router-link to="/examples" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" active-class="text-indigo-600 dark:text-indigo-400">
+                        </router-link>
+                        <router-link to="/examples" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" active-class="text-indigo-600 dark:text-indigo-400">
                             Examples
                         </router-link>
                         <router-link to="/community" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" active-class="text-indigo-600 dark:text-indigo-400">

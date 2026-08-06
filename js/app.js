@@ -2,7 +2,16 @@
  * Teloce Website - Vue 3 Application
  */
 
-const { createApp, ref, computed, watch, onMounted, createRouter, createWebHashHistory } = Vue;
+const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createRouter, createWebHashHistory } = VueRouter;
+
+// ─── SITE DATA (side-effect imports: these populate window.__TELOCE_*_DATA) ──
+
+// Must run before any page mounts and reads window.__TELOCE_*_DATA, which is
+// guaranteed here since ES module imports execute before this file's body.
+import './data/blog.js';
+import './data/examples.js';
+import './data/nav.js';
 
 // ─── IMPORT ALL PAGES ──────────────────────────────────────────────
 
@@ -18,8 +27,19 @@ import { NotFoundPage } from './pages/NotFound.js';
 
 // ─── IMPORT ALL COMPONENTS ──────────────────────────────────────────
 
-// Import components (if you're using them in app.js)
-// Note: Components are registered globally, not imported here
+import { HeaderComponent } from './components/Header.js';
+import { FooterComponent } from './components/Footer.js';
+import { SidebarComponent } from './components/Sidebar.js';
+import { HeroComponent } from './components/Hero.js';
+import { FeaturesComponent } from './components/Features.js';
+import { FrameworkSupportComponent } from './components/FrameworkSupport.js';
+import { TestimonialsComponent } from './components/Testimonials.js';
+import { CTASectionComponent } from './components/CTASection.js';
+import { DocsLayoutComponent } from './components/DocsLayout.js';
+import { SearchComponent } from './components/Search.js';
+import { CodeBlockComponent } from './components/CodeBlock.js';
+import { ThemeToggleComponent } from './components/ThemeToggle.js';
+import { MobileMenuComponent } from './components/MobileMenu.js';
 
 // ─── ROUTER ──────────────────────────────────────────────────────────
 
@@ -122,6 +142,7 @@ app.component('AppCTASection', CTASectionComponent);
 app.component('AppDocsLayout', DocsLayoutComponent);
 app.component('AppSearch', SearchComponent);
 app.component('AppCodeBlock', CodeBlockComponent);
+app.component('code-block', CodeBlockComponent);
 app.component('AppThemeToggle', ThemeToggleComponent);
 app.component('AppMobileMenu', MobileMenuComponent);
 

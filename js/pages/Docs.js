@@ -589,6 +589,88 @@ function buildNav() {
 
 window.__TELOCE_DOCS_NAV = buildNav();
 
+// ─── DOCS PAGE COMPONENT ───────────────────────────────────────────
+
+const DocsPage = {
+    template: `
+        <div class="flex flex-col min-h-screen">
+            <app-header
+                :theme="theme"
+                @toggle-theme="$emit('toggle-theme')"
+                @toggle-mobile="mobileMenuOpen = ($event === false ? false : !mobileMenuOpen)"
+                @toggle-search="$emit('toggle-search')"
+            />
+            <app-docs-layout
+                :mobile-menu-open="mobileMenuOpen"
+                :is-mobile="isMobile"
+                @close-mobile="mobileMenuOpen = false"
+            >
+                <component :is="contentComponent" v-if="currentPage" :key="$route.fullPath"></component>
+                <div v-else>
+                    <h1>Page not found</h1>
+                    <p>We couldn't find that documentation page. Try picking a topic from the sidebar.</p>
+                </div>
+            </app-docs-layout>
+        </div>
+    `,
+    props: {
+        theme: { type: String, default: 'light' },
+    },
+    emits: ['toggle-theme', 'toggle-mobile', 'toggle-search'],
+    data() {
+        return {
+            mobileMenuOpen: false,
+            isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+        };
+    },
+    computed: {
+        currentSectionKey() {
+            return this.$route.params.section || Object.keys(docsData)[0];
+        },
+        currentPageKey() {
+            const section = docsData[this.currentSectionKey];
+            if (!section) return null;
+            return this.$route.params.page || Object.keys(section.pages)[0];
+        },
+        currentPage() {
+            const section = docsData[this.currentSectionKey];
+            if (!section || !this.currentPageKey) return null;
+            return section.pages[this.currentPageKey] || null;
+        },
+        contentComponent() {
+            // Compile the page's HTML (including <code-block> tags) as a real
+            // Vue template so components inside the content actually render.
+            return {
+                template: this.currentPage ? this.currentPage.content : '<p>Content unavailable.</p>',
+            };
+        },
+    },
+    watch: {
+        '$route'() {
+            this.mobileMenuOpen = false;
+            this.redirectIfNoSlug();
+        },
+    },
+    mounted() {
+        window.addEventListener('resize', this.handleResize);
+        this.redirectIfNoSlug();
+    },
+    beforeUnmount() {
+        window.removeEventListener('resize', this.handleResize);
+    },
+    methods: {
+        handleResize() {
+            this.isMobile = window.innerWidth < 768;
+        },
+        redirectIfNoSlug() {
+            // '/docs' alone has no :section/:page params - send the user to
+            // the first real doc page instead of showing a blank content area.
+            if (!this.$route.params.section && this.currentSectionKey && this.currentPageKey) {
+                this.$router.replace('/docs/' + this.currentSectionKey + '/' + this.currentPageKey);
+            }
+        },
+    },
+};
 
 // Export for use in other files
 export { docsData, searchIndex, buildSearchIndex, buildNav };
