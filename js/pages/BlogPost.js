@@ -40,16 +40,16 @@ const BlogPostPage = {
                         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-6">
                             {{ post.title }}
                         </h1>
-                        <div class="prose prose-lg dark:prose-invert max-w-none" v-html="post.content"></div>
+                        <div class="docs-content max-w-none" v-html="post.content"></div>
 
                         <!-- Share -->
                         <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
                             <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Share this post:</p>
                             <div class="flex gap-3">
-                                <a :href="'https://twitter.com/intent/tweet?text=' + encodeURIComponent(post.title) + '&url=' + encodeURIComponent(window.location.href)" target="_blank" rel="noopener" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
+                                <a :href="'https://twitter.com/intent/tweet?text=' + encodeURIComponent(post.title) + '&url=' + encodeURIComponent(currentUrl)" target="_blank" rel="noopener" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
                                     🐦
                                 </a>
-                                <a :href="'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(window.location.href)" target="_blank" rel="noopener" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
+                                <a :href="'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(currentUrl)" target="_blank" rel="noopener" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
                                     🔗
                                 </a>
                                 <a href="https://github.com/telocejs/teloce" target="_blank" rel="noopener" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
@@ -83,6 +83,11 @@ const BlogPostPage = {
             post: null,
             loading: false,
         };
+    },
+    computed: {
+        currentUrl() {
+            return window.location.href;
+        },
     },
     watch: {
         '$route.params.slug': {
