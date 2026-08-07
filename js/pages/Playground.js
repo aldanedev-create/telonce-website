@@ -296,3 +296,6 @@ const PlaygroundPage = {
         },
     },
 };
+
+// Add this line at the very end of Playground.js
+export { PlaygroundPage };
