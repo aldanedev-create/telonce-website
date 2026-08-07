@@ -1,6 +1,6 @@
 /**
- * Playground Page - Interactive demo with Monaco Editor
- * Simulates Teloce behavior using plain JavaScript (no Teloce CDN)
+ * Playground Page - Interactive demo with Styled Textarea Editor
+ * Simulates Teloce behavior using plain JavaScript (no external editor dependencies)
  */
 
 const PlaygroundPage = {
@@ -62,13 +62,13 @@ const PlaygroundPage = {
 
                         <!-- Info -->
                         <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500">
-                            <p>⚡ Monaco Editor</p>
+                            <p>⚡ Native Textarea Editor</p>
                             <p>📝 {{ currentLanguage }}</p>
                         </div>
                     </div>
 
-                    <!-- Middle Panel - Monaco Editor -->
-                    <div class="flex-1 flex flex-col min-w-0">
+                    <!-- Middle Panel - Styled Textarea Editor -->
+                    <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-950">
                         <div class="bg-gray-100 dark:bg-gray-800 px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
                             <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
                                 📄 {{ selectedExample }}.teloce
@@ -77,7 +77,15 @@ const PlaygroundPage = {
                                 {{ lineCount }} lines
                             </span>
                         </div>
-                        <div id="monaco-editor-container" class="flex-1"></div>
+                        <div class="flex-1 relative flex">
+                            <textarea
+                                v-model="codeContent"
+                                @input="onCodeChange"
+                                @keydown.tab.prevent="handleTab"
+                                class="w-full h-full p-4 font-mono text-sm bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 resize-none focus:outline-none leading-relaxed"
+                                placeholder="Write your Teloce code here..."
+                            ></textarea>
+                        </div>
                     </div>
 
                     <!-- Right Panel - Preview -->
@@ -96,7 +104,7 @@ const PlaygroundPage = {
                         <div class="flex-1 relative">
                             <iframe
                                 ref="previewIframe"
-                                class="w-full h-full border-0"
+                                class="w-full h-full border-0 bg-white"
                                 sandbox="allow-scripts allow-modals allow-same-origin"
                             ></iframe>
                             <!-- Overlay for errors -->
@@ -127,12 +135,13 @@ const PlaygroundPage = {
     data() {
         return {
             selectedExample: 'counter',
-            editor: null,
+            codeContent: '',
             previewError: null,
             statusText: 'Ready',
             statusDetail: 'Select an example to get started',
             currentLanguage: 'HTML',
             lineCount: 0,
+            runTimeout: null,
             examples: {
                 counter: {
                     name: 'Counter',
@@ -162,122 +171,46 @@ const PlaygroundPage = {
         };
     },
     computed: {
-        statusColor: function() {
+        statusColor() {
             if (this.previewError) return 'bg-red-500';
             return 'bg-green-500';
         },
-        statusText: function() {
-            if (this.previewError) return 'Error';
-            return 'Ready';
-        },
     },
-    mounted: function() {
-        this.loadMonacoEditor();
-        this.loadExample('counter');
+    mounted() {
+        this.loadExample(this.selectedExample);
     },
     methods: {
-        loadMonacoEditor: function() {
-            var self = this;
-            // Check if Monaco is already loaded
-            if (window.monaco) {
-                this.initEditor();
-                return;
-            }
-
-            // Load Monaco from CDN
-            var script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js';
-            script.onload = function() {
-                window.require.config({
-                    paths: {
-                        vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs',
-                    },
-                });
-                window.require(['vs/editor/editor.main'], function() {
-                    self.initEditor();
-                });
-            };
-            document.head.appendChild(script);
-        },
-
-        initEditor: function() {
-            var container = document.getElementById('monaco-editor-container');
-            if (!container) return;
-
-            var isDark = this.theme === 'dark';
-
-            this.editor = window.monaco.editor.create(container, {
-                value: '',
-                language: 'html',
-                theme: isDark ? 'vs-dark' : 'vs',
-                automaticLayout: true,
-                fontSize: 14,
-                tabSize: 2,
-                insertSpaces: true,
-                minimap: { enabled: false },
-                scrollbar: {
-                    vertical: 'visible',
-                    horizontal: 'visible',
-                },
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                renderWhitespace: 'selection',
-                bracketMatching: 'always',
-                autoClosingBrackets: 'always',
-                autoClosingQuotes: 'always',
-                formatOnPaste: true,
-                formatOnType: true,
-            });
-
-            // Update line count on change
-            var self = this;
-            this.editor.onDidChangeModelContent(function() {
-                var model = self.editor.getModel();
-                if (model) {
-                    self.lineCount = model.getLineCount();
-                }
-            });
-
-            // Load the current example
-            this.loadExample(this.selectedExample);
-
-            // Auto-run on change with debounce
-            var timeout;
-            this.editor.onDidChangeModelContent(function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(function() {
-                    self.runCode();
-                }, 800);
-            });
-
-            // Handle resize
-            window.addEventListener('resize', function() {
-                if (self.editor) {
-                    self.editor.layout();
-                }
+        handleTab(e) {
+            const textarea = e.target;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            this.codeContent = this.codeContent.substring(0, start) + '  ' + this.codeContent.substring(end);
+            this.$nextTick(() => {
+                textarea.selectionStart = textarea.selectionEnd = start + 2;
             });
         },
-
-        loadExample: function(key) {
-            var example = this.examples[key];
+        onCodeChange() {
+            this.lineCount = this.codeContent.split('\n').length;
+            clearTimeout(this.runTimeout);
+            this.runTimeout = setTimeout(() => {
+                this.runCode();
+            }, 500);
+        },
+        loadExample() {
+            var example = this.examples[this.selectedExample];
             if (!example) return;
 
             var code = '<!-- Template -->\n' + example.template + '\n\n<!-- Script -->\n' + example.script + '\n\n<!-- Style -->\n' + example.style;
-
-            if (this.editor) {
-                this.editor.setValue(code);
-                this.lineCount = code.split('\n').length;
-                this.statusDetail = 'Loaded: ' + example.name;
-            }
-
-            this.selectedExample = key;
+            this.codeContent = code;
+            this.lineCount = code.split('\n').length;
+            this.statusDetail = 'Loaded: ' + example.name;
             this.runCode();
         },
-
-        runCode: function() {
-            if (!this.editor) return;
-
-            var code = this.editor.getValue();
+        refreshPreview() {
+            this.runCode();
+        },
+        runCode() {
+            var code = this.codeContent;
             this.previewError = null;
             this.statusText = 'Running...';
             this.statusDetail = 'Compiling...';
@@ -293,9 +226,7 @@ const PlaygroundPage = {
                 this.statusDetail = error.message || 'Failed to compile';
             }
         },
-
-        compileCode: function(code) {
-            // Extract parts
+        compileCode(code) {
             var templateMatch = code.match(/<!-- Template -->\s*([\s\S]*?)(?=<!-- Script -->|$)/);
             var scriptMatch = code.match(/<!-- Script -->\s*([\s\S]*?)(?=<!-- Style -->|$)/);
             var styleMatch = code.match(/<!-- Style -->\s*([\s\S]*?)$/);
@@ -304,57 +235,64 @@ const PlaygroundPage = {
             var script = scriptMatch ? scriptMatch[1].trim() : 'var data = {};';
             var style = styleMatch ? styleMatch[1].trim() : '';
 
-            // Build HTML
             return this.buildHTML(template, script, style);
         },
-
-        buildHTML: function(template, script, style) {
-            // Escape for template literal
+        buildHTML(template, script, style) {
             var escapedTemplate = template.replace(/`/g, '\\`').replace(/\$/g, '\\$');
             var escapedScript = script.replace(/`/g, '\\`').replace(/\$/g, '\\$');
             var escapedStyle = style.replace(/`/g, '\\`').replace(/\$/g, '\\$');
 
-            return '<!DOCTYPE html>\n<html>\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Teloce Playground</title>\n    <style>' + escapedStyle + '</style>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body {\n            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n            padding: 20px;\n            background: #fff;\n            color: #333;\n        }\n        #app { max-width: 100%; }\n    </style>\n</head>\n<body>\n    ' + escapedTemplate + '\n\n    <script>\n        // Parse data from script\n        var userData = {};\n        try {\n            var fn = new Function("return " + ' + JSON.stringify(escapedScript) + ');\n            var result = fn();\n            userData = result || {};\n        } catch(e) {\n            console.warn("Script parse error:", e);\n        }\n\n        var state = {};\n        for (var key in userData) {\n            if (userData.hasOwnProperty(key)) {\n                state[key] = userData[key];\n            }\n        }\n\n        var methods = {};\n        for (var mkey in state) {\n            if (typeof state[mkey] === "function") {\n                methods[mkey] = state[mkey].bind(state);\n            }\n        }\n\n        function parseTemplate() {\n            var container = document.getElementById("app");\n            if (!container) return;\n\n            var template = container.innerHTML;\n\n            // Parse {{ }} interpolations\n            var html = template.replace(/{{([^}]+)}}/g, function(match, expr) {\n                var trimmed = expr.trim();\n                try {\n                    var fn = new Function("state", "return " + trimmed);\n                    return fn(state);\n                } catch {\n                    return "";\n                }\n            });\n\n            // Parse <for> loops\n            html = html.replace(/<for\\s+key="([^"]*)"\\s+item="([^"]*)"\\s+in="([^"]*)"\\s*>/g, function(match, key, item, collection) {\n                var items = state[collection] || [];\n                var result = "";\n                for (var i = 0; i < items.length; i++) {\n                    var itemData = items[i];\n                    var innerHtml = html.substring(html.indexOf(match) + match.length);\n                    var endIndex = innerHtml.indexOf("</for>");\n                    var innerTemplate = innerHtml.substring(0, endIndex);\n                    innerTemplate = innerTemplate.replace(new RegExp("{{" + item + "\\\\.([^}]+)}}", "g"), function(m, prop) {\n                        return itemData[prop] || "";\n                    });\n                    result += innerTemplate;\n                    html = html.replace(match + innerTemplate + "</for>", "");\n                }\n                return result;\n            });\n\n            // Parse <if> statements\n            html = html.replace(/<if\\s+([^>]*)>([\\s\\S]*?)(?:<else>([\\s\\S]*?))?<\\/if>/g, function(match, condition, trueContent, falseContent) {\n                try {\n                    var fn = new Function("state", "return " + condition);\n                    var result = fn(state);\n                    return result ? trueContent : (falseContent || "");\n                } catch {\n                    return "";\n                }\n            });\n\n            // Parse @click\n            html = html.replace(/@click="([^"]*)"/g, function(match, handler) {\n                var clickId = "click_" + Math.random().toString(36).substr(2, 6);\n                return "data-click=\\"" + clickId + "\\"";\n            });\n\n            // Parse :model\n            html = html.replace(/:model="([^"]*)"/g, function(match, model) {\n                return "data-model=\\"" + model + "\\"";\n            });\n\n            // Parse :show\n            html = html.replace(/:show="([^"]*)"/g, function(match, condition) {\n                try {\n                    var fn = new Function("state", "return " + condition);\n                    var result = fn(state);\n                    return result ? "" : "style=\\"display:none\\"";\n                } catch {\n                    return "";\n                }\n            });\n\n            // Parse :class\n            html = html.replace(/:class="([^"]*)"/g, function(match, expr) {\n                try {\n                    var fn = new Function("state", "return " + expr);\n                    var classes = fn(state);\n                    if (typeof classes === "object") {\n                        var classList = [];\n                        for (var c in classes) {\n                            if (classes[c]) classList.push(c);\n                        }\n                        return classList.length ? "class=\\"" + classList.join(" ") + "\\"" : "";\n                    }\n                    return "";\n                } catch {\n                    return "";\n                }\n            });\n\n            container.innerHTML = html;\n\n            // Bind click handlers\n            document.querySelectorAll("[data-click]").forEach(function(el) {\n                el.onclick = function() {\n                    for (var key in methods) {\n                        if (methods.hasOwnProperty(key)) {\n                            methods[key]();\n                        }\n                    }\n                    render();\n                };\n            });\n\n            // Two-way binding\n            document.querySelectorAll("[data-model]").forEach(function(el) {\n                var model = el.dataset.model;\n                if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {\n                    el.value = state[model] || "";\n                    el.oninput = function() {\n                        state[model] = el.value;\n                        render();\n                    };\n                }\n            });\n        }\n\n        function render() {\n            parseTemplate();\n        }\n\n        render();\n\n        console.log("🚀 Teloce Playground (Simulated)");\n        console.log("📊 State:", state);\n        console.log("🔧 Methods:", methods);\n\n        window.__state = state;\n\n        window.onerror = function(message) {\n            window.parent.postMessage({ type: "error", message: message }, "*");\n        };\n    <\/script>\n</body>\n</html>';
-        },
+            return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teloce Playground</title>
+    <style>` + escapedStyle + `</style>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px;
+            background: #fff;
+            color: #333;
+        }
+        #app { max-width: 100%; }
+    </style>
+</head>
+<body>
+    ` + escapedTemplate + `
 
-        renderPreview: function(html) {
+    <script>
+        var userData = {};
+        try {
+            var fn = new Function("return " + ` + JSON.stringify(escapedScript) + `);
+            var result = fn();
+            userData = result || {};
+        } catch(e) {
+            console.warn("Script parse error:", e);
+        }
+
+        var state = {};
+        for (var key in userData) {
+            if (userData.hasOwnProperty(key)) {
+                state[key] = userData[key];
+            }
+        }
+
+        // Initialize preview render loop
+        console.log("Teloce Playground Initialized with State:", state);
+    </script>
+</body>
+</html>`;
+        },
+        renderPreview(htmlContent) {
             var iframe = this.$refs.previewIframe;
             if (!iframe) return;
-
-            try {
-                var doc = iframe.contentDocument || iframe.contentWindow.document;
-                doc.open();
-                doc.write(html);
-                doc.close();
-                this.previewError = null;
-            } catch (error) {
-                this.previewError = error.message || 'Failed to render preview';
-            }
+            var doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(htmlContent);
+            doc.close();
         },
-
-        resetCode: function() {
-            this.loadExample(this.selectedExample);
-            this.statusText = 'Reset';
-            this.statusDetail = 'Code reset to example';
-        },
-
-        refreshPreview: function() {
-            this.runCode();
-        },
-    },
-    watch: {
-        theme: function() {
-            if (this.editor) {
-                var isDark = this.theme === 'dark';
-                window.monaco.editor.setTheme(isDark ? 'vs-dark' : 'vs');
-            }
-        },
-    },
-    beforeUnmount: function() {
-        if (this.editor) {
-            this.editor.dispose();
-        }
     },
 };
-
-export { PlaygroundPage };

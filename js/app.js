@@ -139,6 +139,7 @@ app.component('AppFeatures', FeaturesComponent);
 app.component('AppFrameworkSupport', FrameworkSupportComponent);
 app.component('AppTestimonials', TestimonialsComponent);
 app.component('AppCTASection', CTASectionComponent);
+app.component('app-cta-section', CTASectionComponent);
 app.component('AppDocsLayout', DocsLayoutComponent);
 app.component('AppSearch', SearchComponent);
 app.component('AppCodeBlock', CodeBlockComponent);

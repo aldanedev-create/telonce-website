@@ -35,9 +35,9 @@ const FrameworkSupportComponent = {
     data() {
         return {
             frameworks: [
-                { name: 'Flask', logo: '/assets/images/flask.png' },
+                { name: 'Flask', logo: '/assets/images/Flask.png' },
                 { name: 'Django', logo: '/assets/images/django.jpg' },
-                { name: 'FastAPI', logo: '/assets/images/fastapi.png' },
+                { name: 'FastAPI', logo: '/assets/images/Fastapi.png' },
                 { name: 'Quart', logo: '/assets/images/Quart.png' },
                 { name: 'Flaxon', logo: '/assets/images/flaxon.png' },
             ],

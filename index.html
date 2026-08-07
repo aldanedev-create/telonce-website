@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Teloce - Template Engine for Python Web Developers</title>
     <meta name="description" content="A TypeScript template engine for Python web developers. Works with Flask, Django, FastAPI, and more." />
-    <link rel="icon" type="image/x-icon" href="/assets/images/telonce.png" />
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico" />
 
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -16,6 +16,19 @@
     <!-- Vue Router 4 (CDN) -->
     <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
 
+    <!--
+      Opt Tailwind's dark: variant into class-based toggling.
+      Without this, dark: utilities only ever respond to the OS-level
+      prefers-color-scheme media query - the .dark class that app.js toggles
+      on <html>/<body> (and that the theme toggle button controls) would be
+      completely ignored, silently breaking dark mode across the whole site.
+      Must be its own <style type="text/tailwindcss"> block: @custom-variant
+      is a Tailwind directive that a plain <style> tag will not process.
+    -->
+    <style type="text/tailwindcss">
+        @custom-variant dark (&:where(.dark, .dark *));
+    </style>
+
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,12 +36,17 @@
 
     <!-- Custom CSS (minimal, only if needed) -->
     <style>
-        /* ── Reset & Base ── */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /*
+         * Wrapped in @layer base so these rules sit in Tailwind's cascade
+         * correctly. Tailwind v4's generated utilities live inside CSS
+         * layers; unlayered CSS always wins over layered CSS regardless of
+         * specificity, so anything here MUST be layered or it will silently
+         * override every Tailwind utility class on the page.
+         * (Margin/padding/box-sizing reset is skipped entirely - Tailwind's
+         * own Preflight already resets those, doing it again unlayered was
+         * previously wiping out every padding/margin utility site-wide.)
+         */
+        @layer base {
 
         html {
             scroll-behavior: smooth;
@@ -465,6 +483,8 @@
         .dark .docs-content hr {
             border-top-color: #334155;
         }
+
+        } /* end @layer base */
     </style>
 </head>
 <body>
