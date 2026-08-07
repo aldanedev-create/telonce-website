@@ -11,21 +11,22 @@ const SearchComponent = {
             <!-- Search Input -->
             <div class="relative">
                 <input
+                    ref="searchInput"
                     type="text"
                     v-model="query"
                     @input="handleSearch"
-                    @keydown.esc="closeSearch"
+                    @keydown.esc="handleEscape"
                     @focus="handleFocus"
                     placeholder="Search documentation..."
-                    class="w-full px-4 py-2.5 pl-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    class="w-full px-4 py-3.5 pl-11 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-2xl text-base"
                 />
-                <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="absolute left-3.5 top-4 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <button
                     v-if="query"
                     @click="clearSearch"
-                    class="absolute right-3 top-2.5 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    class="absolute right-3 top-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                     <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -33,19 +34,34 @@ const SearchComponent = {
                 </button>
             </div>
 
+            <!-- Empty State / Quick Links -->
+            <div v-if="!query" class="mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 z-50">
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Quick links</p>
+                <div class="flex flex-wrap gap-2">
+                    <router-link
+                        v-for="link in quickLinks"
+                        :key="link.path"
+                        :to="link.path"
+                        @click="$emit('close')"
+                        class="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-gray-600 dark:text-gray-300"
+                    >
+                        {{ link.title }}
+                    </router-link>
+                </div>
+            </div>
+
             <!-- Search Results -->
-            <div v-if="showResults && results.length > 0" class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
+            <div v-if="showResults && results.length > 0" class="mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
                 <div class="p-2 text-xs text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-gray-700">
                     {{ results.length }} result{{ results.length > 1 ? 's' : '' }}
                 </div>
                 <div v-for="result in results" :key="result.path" class="border-b border-gray-100 dark:border-gray-700 last:border-0">
                     <router-link
                         :to="result.path"
-                        @click="closeSearch"
+                        @click="$emit('close')"
                         class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
-                        <div class="font-medium text-gray-900 dark:text-white text-sm">
-                            {{ highlightText(result.title) }}
+                        <div class="font-medium text-gray-900 dark:text-white text-sm" v-html="highlightText(result.title)">
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             {{ result.section }}
@@ -57,7 +73,7 @@ const SearchComponent = {
             </div>
 
             <!-- No Results -->
-            <div v-if="showResults && query && results.length === 0 && !isSearching" class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-center z-50">
+            <div v-if="showResults && query && results.length === 0 && !isSearching" class="mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 text-center z-50">
                 <p class="text-gray-500 dark:text-gray-400">No results found for "<span class="font-medium text-gray-700 dark:text-gray-300">{{ query }}</span>"</p>
                 <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Try different keywords or check the documentation</p>
                 <div class="mt-4 flex flex-wrap justify-center gap-2">
@@ -68,12 +84,13 @@ const SearchComponent = {
             </div>
 
             <!-- Loading -->
-            <div v-if="isSearching" class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 text-center z-50">
+            <div v-if="isSearching" class="mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 text-center z-50">
                 <div class="inline-block w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                 <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Searching...</span>
             </div>
         </div>
     `,
+    emits: ['close'],
     data() {
         return {
             query: '',
@@ -84,10 +101,19 @@ const SearchComponent = {
             searchTimeout: null,
             isFocused: false,
             suggestions: [],
+            quickLinks: [
+                { title: 'Installation', path: '/docs/getting-started/installation' },
+                { title: 'Quick Start', path: '/docs/getting-started/quick-start' },
+                { title: 'Templates', path: '/docs/guides/templates' },
+                { title: 'Reactivity', path: '/docs/guides/reactivity' },
+            ],
         };
     },
     mounted() {
         this.buildSearchIndex();
+        this.$nextTick(() => {
+            if (this.$refs.searchInput) this.$refs.searchInput.focus();
+        });
     },
     methods: {
         /**
@@ -181,6 +207,18 @@ const SearchComponent = {
         closeSearch() {
             this.showResults = false;
             this.isFocused = false;
+        },
+
+        /**
+         * Escape key: close the dropdown first if it's open, otherwise
+         * close the whole search modal.
+         */
+        handleEscape() {
+            if (this.showResults) {
+                this.closeSearch();
+            } else {
+                this.$emit('close');
+            }
         },
 
         /**

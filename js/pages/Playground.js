@@ -1,301 +1,694 @@
 /**
- * Playground Page - Interactive demo with Styled Textarea Editor
- * Simulates Teloce behavior using plain JavaScript (no external editor dependencies)
+ * Teloce Playground Page - Interactive Simulator
+ * Features a custom regex-based syntax highlighted editor (no Monaco/CDN)
+ * and a fully functional embedded reactivity engine simulating Teloce's behavior.
  */
 
 const PlaygroundPage = {
     template: `
-        <div class="flex flex-col min-h-screen">
-            <!-- Header -->
-            <app-header
-                :theme="theme"
-                @toggle-theme="$emit('toggle-theme')"
-                @toggle-mobile="$emit('toggle-mobile')"
-                @toggle-search="$emit('toggle-search')"
-            />
+        <div class="flex flex-col min-h-screen bg-white dark:bg-[#111111]">
+            <!-- Header (Simulation) -->
+            <header class="h-14 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-gray-50 dark:bg-[#1a1a1a] flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">T</div>
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">Teloce Interactive Playground</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full" 
+                          :class="statusColor">
+                        <span class="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+                        {{ statusText }}
+                    </span>
+                </div>
+            </header>
 
-            <main class="flex-1 pt-16 md:pt-20 overflow-hidden">
-                <div class="flex h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)]">
-                    <!-- Left Panel - Examples & Controls -->
-                    <div class="w-64 flex-shrink-0 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col overflow-y-auto">
-                        <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                            Examples
-                        </h3>
+            <main class="flex-1 flex flex-col md:flex-row overflow-hidden h-[calc(100vh-3.5rem)]">
+                <!-- Mobile Tabs -->
+                <div class="flex md:hidden border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#1a1a1a]">
+                    <button @click="mobileTab = 'editor'" 
+                            :class="mobileTab === 'editor' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors">
+                        📝 Editor
+                    </button>
+                    <button @click="mobileTab = 'preview'" 
+                            :class="mobileTab === 'preview' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                            class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors">
+                        👁️ Preview & DevTools
+                    </button>
+                </div>
 
-                        <!-- Example Dropdown -->
-                        <select
-                            v-model="selectedExample"
-                            @change="loadExample"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
+                <!-- Left Sidebar (Examples) -->
+                <div class="hidden md:flex w-64 flex-col bg-gray-50 dark:bg-[#161616] border-r border-gray-200 dark:border-gray-800 z-10">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Load Example</h3>
+                        <select v-model="selectedExample" @change="loadExample" 
+                                class="w-full bg-white dark:bg-[#222] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-md px-3 py-2 outline-none focus:border-indigo-500 transition-colors cursor-pointer">
                             <option v-for="(example, key) in examples" :key="key" :value="key">
                                 {{ example.name }}
                             </option>
                         </select>
-
-                        <!-- Buttons -->
-                        <div class="flex gap-2 mt-4">
-                            <button
-                                @click="runCode"
-                                class="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-                            >
-                                ▶ Run
-                            </button>
-                            <button
-                                @click="resetCode"
-                                class="flex-1 px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
-                            >
-                                ⟳ Reset
-                            </button>
-                        </div>
-
-                        <!-- Status -->
-                        <div class="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full" :class="statusColor"></span>
-                                <span class="text-gray-600 dark:text-gray-400">{{ statusText }}</span>
-                            </div>
-                            <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                {{ statusDetail }}
-                            </div>
-                        </div>
-
-                        <!-- Info -->
-                        <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500">
-                            <p>⚡ Native Textarea Editor</p>
-                            <p>📝 {{ currentLanguage }}</p>
-                        </div>
+                    </div>
+                    
+                    <div class="p-4 flex-1 overflow-y-auto">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Features Showcased</h3>
+                        <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                            <li v-for="feat in examples[selectedExample].features" :key="feat" class="flex items-center gap-2">
+                                <span class="text-indigo-500">✓</span> {{ feat }}
+                            </li>
+                        </ul>
                     </div>
 
-                    <!-- Middle Panel - Styled Textarea Editor -->
-                    <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-950">
-                        <div class="bg-gray-100 dark:bg-gray-800 px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                📄 {{ selectedExample }}.teloce
-                            </span>
-                            <span class="text-xs text-gray-400 dark:text-gray-500">
-                                {{ lineCount }} lines
-                            </span>
-                        </div>
-                        <div class="flex-1 relative flex">
+                    <div class="p-4 border-t border-gray-200 dark:border-gray-800">
+                        <button @click="runCode" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-2">
+                            <span>▶ Re-compile</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Middle Panel (Custom Highlighted Editor) -->
+                <div class="flex-1 flex flex-col min-w-0 border-r border-gray-200 dark:border-gray-800 bg-[#fafafa] dark:bg-[#1e1e1e]"
+                     :class="mobileTab === 'editor' ? 'flex' : 'hidden md:flex'">
+                    <div class="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-[#252526] border-b border-gray-200 dark:border-[#333]">
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">📄 app.teloce (SFC Mode)</span>
+                        <span class="text-xs text-gray-400">{{ lineCount }} lines</span>
+                    </div>
+                    
+                    <!-- Editor Engine (Textarea + Regex Pre) -->
+                    <div class="flex-1 relative overflow-hidden group">
+                        <div class="absolute inset-0 overflow-auto" @scroll="syncScroll" ref="scrollContainer">
+                            <!-- Syntax Highlighting Layer -->
+                            <pre class="absolute inset-0 m-0 p-4 font-mono text-[13px] leading-relaxed whitespace-pre pointer-events-none z-0 text-gray-800 dark:text-gray-300" 
+                                 aria-hidden="true" 
+                                 v-html="highlightedCode"></pre>
+                            
+                            <!-- Interaction Layer -->
                             <textarea
+                                ref="codeEditor"
                                 v-model="codeContent"
                                 @input="onCodeChange"
                                 @keydown.tab.prevent="handleTab"
-                                class="w-full h-full p-4 font-mono text-sm bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 resize-none focus:outline-none leading-relaxed"
-                                placeholder="Write your Teloce code here..."
+                                spellcheck="false"
+                                class="absolute inset-0 w-full h-full m-0 p-4 font-mono text-[13px] leading-relaxed text-transparent bg-transparent caret-black dark:caret-white resize-none outline-none whitespace-pre z-10 border-none"
                             ></textarea>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Right Panel - Preview -->
-                    <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800">
-                        <div class="bg-gray-100 dark:bg-gray-800 px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                👁️ Preview
-                            </span>
-                            <button
-                                @click="refreshPreview"
-                                class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                            >
-                                🔄 Refresh
-                            </button>
+                <!-- Right Panel (Live Preview & Teloce DevTools) -->
+                <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-black relative"
+                     :class="mobileTab === 'preview' ? 'flex' : 'hidden md:flex'">
+                    
+                    <div class="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-[#333]">
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">🌍 Live Preview</span>
+                        <button @click="refreshPreview" class="text-xs text-gray-500 hover:text-indigo-500 transition-colors">↻ Reload Frame</button>
+                    </div>
+
+                    <!-- Iframe Preview -->
+                    <div class="flex-1 relative bg-white">
+                        <iframe
+                            ref="previewIframe"
+                            class="w-full h-full border-0"
+                            sandbox="allow-scripts allow-modals allow-same-origin"
+                        ></iframe>
+
+                        <!-- Human-Friendly Error Overlay -->
+                        <div v-if="previewError" class="absolute inset-0 bg-white/90 dark:bg-black/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6">
+                            <div class="max-w-md w-full bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-xl p-5 shadow-2xl">
+                                <div class="flex items-center gap-3 mb-3 text-red-600 dark:text-red-400">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    <h3 class="font-bold">Teloce Compilation Error</h3>
+                                </div>
+                                <p class="text-sm font-mono text-gray-800 dark:text-gray-200 mb-4 bg-white dark:bg-black p-3 rounded border border-red-100 dark:border-red-900">{{ previewError }}</p>
+                                <div v-if="previewSuggestion" class="text-sm text-gray-600 dark:text-gray-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-900/50">
+                                    <span class="font-semibold text-yellow-700 dark:text-yellow-500">💡 Suggestion:</span> {{ previewSuggestion }}
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex-1 relative">
-                            <iframe
-                                ref="previewIframe"
-                                class="w-full h-full border-0 bg-white"
-                                sandbox="allow-scripts allow-modals allow-same-origin"
-                            ></iframe>
-                            <!-- Overlay for errors -->
-                            <div
-                                v-if="previewError"
-                                class="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
-                            >
-                                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 max-w-md w-full">
-                                    <div class="flex items-center gap-3 text-red-600 dark:text-red-400 mb-2">
-                                        <span class="text-2xl">❌</span>
-                                        <span class="font-semibold">Error</span>
+                    </div>
+
+                    <!-- Teloce DevTools Panel -->
+                    <div class="h-48 border-t border-gray-200 dark:border-[#333] bg-gray-50 dark:bg-[#161616] flex flex-col flex-shrink-0">
+                        <div class="flex border-b border-gray-200 dark:border-[#333]">
+                            <button class="px-4 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500 bg-white dark:bg-[#1e1e1e]">🛠 DevTools</button>
+                            <button class="px-4 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Console</button>
+                        </div>
+                        <div class="flex-1 p-4 grid grid-cols-2 gap-4 overflow-auto">
+                            <!-- Performance -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase">Performance Stats</h4>
+                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                    <div class="bg-white dark:bg-[#222] p-2 rounded border border-gray-200 dark:border-gray-800">
+                                        <div class="text-xs text-gray-500">Simulated FPS</div>
+                                        <div class="font-mono text-green-500 font-medium">{{ devTools.fps }}</div>
                                     </div>
-                                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ previewError }}</p>
+                                    <div class="bg-white dark:bg-[#222] p-2 rounded border border-gray-200 dark:border-gray-800">
+                                        <div class="text-xs text-gray-500">Reactivity Triggers</div>
+                                        <div class="font-mono text-indigo-500 font-medium">{{ devTools.effectCount }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Component Tree -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase">Inspector</h4>
+                                <div class="bg-white dark:bg-[#222] p-2 rounded border border-gray-200 dark:border-gray-800 h-[calc(100%-2rem)] overflow-y-auto font-mono text-xs">
+                                    <div class="text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                                        <span>▼</span> &lt;Root /&gt;
+                                    </div>
+                                    <div class="pl-4 text-gray-500">
+                                        <span class="text-pink-500">state</span>: Reactive Proxy<br>
+                                        <span class="text-green-500">status</span>: Mounted
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </main>
-
-            <app-footer />
         </div>
     `,
     props: {
-        theme: { type: String, default: 'light' },
+        theme: { type: String, default: 'dark' },
     },
-    emits: ['toggle-theme', 'toggle-mobile', 'toggle-search'],
     data() {
         return {
-            selectedExample: 'counter',
+            selectedExample: 'todo',
             codeContent: '',
             previewError: null,
+            previewSuggestion: null,
             statusText: 'Ready',
-            statusDetail: 'Select an example to get started',
-            currentLanguage: 'HTML',
+            mobileTab: 'editor',
             lineCount: 0,
             runTimeout: null,
-            examples: {
-                counter: {
-                    name: 'Counter',
-                    template: '<div id="app">\n    <h1>{{ title }}</h1>\n    <p>This is a simple counter with Teloce reactivity</p>\n    <div class="counter-display">\n        <span class="count">{{ count }}</span>\n    </div>\n    <div class="buttons">\n        <button @click="increment">+ Increment</button>\n        <button @click="decrement">- Decrement</button>\n        <button @click="reset">⟳ Reset</button>\n    </div>\n    <p class="info">Double: {{ doubleCount }}</p>\n</div>',
-                    script: 'var data = {\n    title: "Counter Demo",\n    count: 0,\n    increment: function() {\n        this.count++;\n    },\n    decrement: function() {\n        if (this.count > 0) this.count--;\n    },\n    reset: function() {\n        this.count = 0;\n    },\n    computed: {\n        doubleCount: function() {\n            return this.count * 2;\n        }\n    }\n};',
-                    style: '#app {\n    max-width: 400px;\n    margin: 0 auto;\n    text-align: center;\n    padding: 20px;\n}\nh1 {\n    color: #333;\n    font-size: 28px;\n    margin-bottom: 10px;\n}\n.counter-display {\n    background: #f5f5f5;\n    border-radius: 12px;\n    padding: 30px;\n    margin: 20px 0;\n}\n.count {\n    font-size: 48px;\n    font-weight: bold;\n    color: #4a90d9;\n}\n.buttons {\n    display: flex;\n    gap: 10px;\n    justify-content: center;\n    flex-wrap: wrap;\n}\nbutton {\n    padding: 10px 24px;\n    border: none;\n    border-radius: 8px;\n    font-size: 14px;\n    cursor: pointer;\n    transition: all 0.2s;\n}\nbutton:hover {\n    transform: translateY(-2px);\n}\n.buttons button:first-child {\n    background: #4a90d9;\n    color: white;\n}\n.buttons button:nth-child(2) {\n    background: #e74c3c;\n    color: white;\n}\n.buttons button:last-child {\n    background: #95a5a6;\n    color: white;\n}\n.info {\n    margin-top: 20px;\n    color: #888;\n    font-size: 14px;\n}',
-                },
-                todo: {
-                    name: 'Todo App',
-                    template: '<div id="app">\n    <h1>{{ title }}</h1>\n    <p>Add, complete, and delete tasks</p>\n    <div class="input-group">\n        <input :model="newTodo" @keyup.enter="addTodo" placeholder="Add a todo..." />\n        <button @click="addTodo">Add</button>\n    </div>\n    <ul>\n        <for key="id" item="todo" in="todos">\n            <li :class="{ done: todo.done }">\n                <span @click="toggleTodo(todo.id)">{{ todo.text }}</span>\n                <button @click="deleteTodo(todo.id)">✕</button>\n            </li>\n        </for>\n    </ul>\n    <div class="footer">\n        <span>{{ activeTodos }} remaining</span>\n    </div>\n</div>',
-                    script: 'var data = {\n    title: "Todo List",\n    newTodo: "",\n    todos: [\n        { id: 1, text: "Learn Teloce", done: true },\n        { id: 2, text: "Build a project", done: false },\n        { id: 3, text: "Deploy to production", done: false }\n    ],\n    addTodo: function() {\n        if (this.newTodo.trim()) {\n            this.todos.push({\n                id: Date.now(),\n                text: this.newTodo.trim(),\n                done: false\n            });\n            this.newTodo = "";\n        }\n    },\n    deleteTodo: function(id) {\n        this.todos = this.todos.filter(function(t) { return t.id !== id; });\n    },\n    toggleTodo: function(id) {\n        var todo = this.todos.find(function(t) { return t.id === id; });\n        if (todo) todo.done = !todo.done;\n    },\n    computed: {\n        activeTodos: function() {\n            return this.todos.filter(function(t) { return !t.done; }).length;\n        }\n    }\n};',
-                    style: '#app {\n    max-width: 500px;\n    margin: 0 auto;\n    padding: 20px;\n}\nh1 {\n    color: #333;\n    font-size: 28px;\n    margin-bottom: 10px;\n}\n.input-group {\n    display: flex;\n    gap: 10px;\n    margin: 20px 0;\n}\ninput {\n    flex: 1;\n    padding: 10px 14px;\n    border: 2px solid #ddd;\n    border-radius: 8px;\n    font-size: 14px;\n    outline: none;\n}\ninput:focus {\n    border-color: #4a90d9;\n}\n.input-group button {\n    padding: 10px 24px;\n    background: #4a90d9;\n    color: white;\n    border: none;\n    border-radius: 8px;\n    cursor: pointer;\n}\nul {\n    list-style: none;\n    padding: 0;\n}\nli {\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n    padding: 12px 16px;\n    background: #f8f9fa;\n    border-radius: 8px;\n    margin-bottom: 8px;\n}\nli.done span {\n    text-decoration: line-through;\n    opacity: 0.6;\n}\nli span {\n    cursor: pointer;\n    flex: 1;\n}\nli button {\n    background: none;\n    border: none;\n    color: #e74c3c;\n    cursor: pointer;\n    font-size: 18px;\n}\n.footer {\n    margin-top: 20px;\n    color: #888;\n}',
-                },
-                fetch: {
-                    name: 'API Fetch',
-                    template: '<div id="app">\n    <h1>{{ title }}</h1>\n    <p>Simulated API data fetching</p>\n    <button @click="fetchData" :disabled="loading">\n        {{ loading ? "Loading..." : "Fetch Data" }}\n    </button>\n    <div class="data" :show="!loading && data.length > 0">\n        <ul>\n            <for key="id" item="item" in="data">\n                <li>\n                    <span class="id">#{{ item.id }}</span>\n                    <span class="name">{{ item.name }}</span>\n                </li>\n            </for>\n        </ul>\n        <p class="count">{{ data.length }} items loaded</p>\n    </div>\n    <div class="error" :show="error">\n        <p>❌ {{ error }}</p>\n    </div>\n</div>',
-                    script: 'var data = {\n    title: "API Data Fetcher",\n    data: [],\n    loading: false,\n    error: null,\n    fetchData: function() {\n        var self = this;\n        this.loading = true;\n        this.error = null;\n        setTimeout(function() {\n            self.data = [\n                { id: 1, name: "Item One" },\n                { id: 2, name: "Item Two" },\n                { id: 3, name: "Item Three" },\n                { id: 4, name: "Item Four" },\n                { id: 5, name: "Item Five" }\n            ];\n            self.loading = false;\n        }, 1000);\n    }\n};\nsetTimeout(function() { data.fetchData(); }, 500);',
-                    style: '#app {\n    max-width: 500px;\n    margin: 0 auto;\n    padding: 20px;\n}\nh1 {\n    color: #333;\n    font-size: 28px;\n    margin-bottom: 10px;\n}\nbutton {\n    padding: 10px 24px;\n    background: #4a90d9;\n    color: white;\n    border: none;\n    border-radius: 8px;\n    cursor: pointer;\n    font-size: 14px;\n}\nbutton:hover:not(:disabled) {\n    transform: translateY(-2px);\n}\nbutton:disabled {\n    opacity: 0.6;\n    cursor: not-allowed;\n}\n.data {\n    margin-top: 20px;\n}\nul {\n    list-style: none;\n    padding: 0;\n}\nli {\n    display: flex;\n    gap: 12px;\n    padding: 10px 14px;\n    background: #f8f9fa;\n    border-radius: 8px;\n    margin-bottom: 6px;\n}\n.id {\n    color: #888;\n    font-size: 12px;\n    min-width: 40px;\n}\n.name {\n    color: #333;\n}\n.count {\n    margin-top: 12px;\n    color: #888;\n    font-size: 14px;\n}\n.error {\n    margin-top: 16px;\n    padding: 12px;\n    background: #fde8e8;\n    border-radius: 8px;\n    border-left: 4px solid #e74c3c;\n}\n.error p {\n    color: #e74c3c;\n    margin: 0;\n}',
-                },
-                form: {
-                    name: 'Form Validation',
-                    template: '<div id="app">\n    <h1>{{ title }}</h1>\n    <p>Form with validation and two-way binding</p>\n    <form @submit.prevent="handleSubmit">\n        <div class="field">\n            <label>Name</label>\n            <input :model="form.name" placeholder="Enter your name" />\n            <span class="error" :show="errors.name">{{ errors.name }}</span>\n        </div>\n        <div class="field">\n            <label>Email</label>\n            <input :model="form.email" type="email" placeholder="Enter your email" />\n            <span class="error" :show="errors.email">{{ errors.email }}</span>\n        </div>\n        <div class="field">\n            <label>Message</label>\n            <textarea :model="form.message" rows="4" placeholder="Enter your message"></textarea>\n            <span class="error" :show="errors.message">{{ errors.message }}</span>\n        </div>\n        <button type="submit" :disabled="submitting">\n            {{ submitting ? "Submitting..." : "Submit" }}\n        </button>\n        <div class="success" :show="submitted">\n            ✅ Form submitted successfully!\n        </div>\n    </form>\n</div>',
-                    script: 'var data = {\n    title: "Contact Form",\n    form: {\n        name: "",\n        email: "",\n        message: ""\n    },\n    errors: {},\n    submitting: false,\n    submitted: false,\n    handleSubmit: function() {\n        var self = this;\n        this.errors = {};\n        this.submitted = false;\n\n        if (!this.form.name.trim()) {\n            this.errors.name = "Name is required";\n        }\n        if (!this.form.email.trim()) {\n            this.errors.email = "Email is required";\n        } else if (this.form.email.indexOf("@") === -1) {\n            this.errors.email = "Invalid email address";\n        }\n        if (!this.form.message.trim()) {\n            this.errors.message = "Message is required";\n        }\n\n        if (Object.keys(this.errors).length > 0) return;\n\n        this.submitting = true;\n        setTimeout(function() {\n            self.submitting = false;\n            self.submitted = true;\n        }, 1000);\n    }\n};',
-                    style: '#app {\n    max-width: 500px;\n    margin: 0 auto;\n    padding: 20px;\n}\nh1 {\n    color: #333;\n    font-size: 28px;\n    margin-bottom: 10px;\n}\n.field {\n    margin-bottom: 20px;\n}\nlabel {\n    display: block;\n    font-weight: 500;\n    color: #333;\n    margin-bottom: 6px;\n}\ninput, textarea {\n    width: 100%;\n    padding: 10px 14px;\n    border: 2px solid #ddd;\n    border-radius: 8px;\n    font-size: 14px;\n    outline: none;\n}\ninput:focus, textarea:focus {\n    border-color: #4a90d9;\n}\ntextarea {\n    resize: vertical;\n}\n.error {\n    color: #e74c3c;\n    font-size: 13px;\n    margin-top: 4px;\n    display: block;\n}\nbutton[type="submit"] {\n    padding: 12px 32px;\n    background: #4a90d9;\n    color: white;\n    border: none;\n    border-radius: 8px;\n    cursor: pointer;\n    font-size: 16px;\n}\nbutton[type="submit"]:hover:not(:disabled) {\n    transform: translateY(-2px);\n}\nbutton[type="submit"]:disabled {\n    opacity: 0.6;\n    cursor: not-allowed;\n}\n.success {\n    margin-top: 16px;\n    padding: 12px 16px;\n    background: #d4edda;\n    border-radius: 8px;\n    border-left: 4px solid #28a745;\n    color: #155724;\n}',
-                },
+            devTools: {
+                fps: 60,
+                effectCount: 0,
             },
+            examples: {
+                todo: {
+                    name: 'Todo List (Complex)',
+                    features: ['Keyed Loops (<for>)', 'Two-Way Binding (:model)', 'Computed Properties', 'Dynamic Classes'],
+                    template: `<!-- Template -->
+<div id="app">
+    <h1>{{ title }}</h1>
+    <p class="subtitle">Simulating fine-grained DOM patching without VDOM.</p>
+    
+    <div class="input-group">
+        <input :model="newTodo" @keyup.enter="addTodo" placeholder="What needs to be done?" />
+        <button @click="addTodo">Add</button>
+    </div>
+    
+    <div class="stats">
+        <span>{{ activeTodos }} tasks remaining</span>
+    </div>
+
+    <ul>
+        <!-- Teloce keyed loop simulation -->
+        <for key="id" item="todo" in="todos">
+            <li :class="{ done: todo.done }">
+                <span @click="toggleTodo(todo.id)" class="text">{{ todo.text }}</span>
+                <button @click="deleteTodo(todo.id)" class="delete">✕</button>
+            </li>
+        </for>
+    </ul>
+</div>`,
+                    script: `<!-- Script -->
+var data = {
+    title: "Teloce Tasks",
+    newTodo: "",
+    todos: [
+        { id: 1, text: "Learn Teloce Reactivity", done: true },
+        { id: 2, text: "Build a mini interpreter", done: true },
+        { id: 3, text: "Deploy to production", done: false }
+    ],
+    
+    addTodo: function() {
+        if (this.newTodo.trim()) {
+            this.todos.push({
+                id: Date.now(),
+                text: this.newTodo.trim(),
+                done: false
+            });
+            this.newTodo = ""; // Auto updates input via :model
+        }
+    },
+    
+    deleteTodo: function(id) {
+        this.todos = this.todos.filter(t => t.id !== id);
+    },
+    
+    toggleTodo: function(id) {
+        var todo = this.todos.find(t => t.id === id);
+        if (todo) todo.done = !todo.done;
+    },
+    
+    computed: {
+        activeTodos: function() {
+            return this.todos.filter(t => !t.done).length;
+        }
+    }
+};`,
+                    style: `<!-- Style -->
+#app { max-width: 480px; margin: 0 auto; padding: 30px 20px; font-family: system-ui; }
+h1 { color: #111; font-size: 2rem; margin-bottom: 5px; }
+.subtitle { color: #666; font-size: 0.9rem; margin-bottom: 25px; }
+.input-group { display: flex; gap: 8px; margin-bottom: 15px; }
+input { flex: 1; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; transition: border-color 0.2s; }
+input:focus { outline: none; border-color: #6366f1; }
+.input-group button { background: #6366f1; color: white; border: none; padding: 0 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.input-group button:hover { background: #4f46e5; }
+.stats { font-size: 0.85rem; color: #888; margin-bottom: 15px; font-weight: 500; }
+ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+li { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #f3f4f6; transition: all 0.2s; }
+li.done { opacity: 0.6; background: #f3f4f6; }
+li.done .text { text-decoration: line-through; color: #6b7280; }
+.text { flex: 1; cursor: pointer; user-select: none; font-weight: 500; }
+.delete { background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; border-radius: 4px; opacity: 0.5; transition: opacity 0.2s; }
+li:hover .delete { opacity: 1; }
+li:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }`
+                },
+                counter: {
+                    name: 'Counter & Computed',
+                    features: ['Event Handling (@click)', 'Computed State', 'Direct Node Patching'],
+                    template: `<!-- Template -->\n<div id="app">\n    <h1>{{ title }}</h1>\n    <div class="counter">\n        <button @click="decrement">-</button>\n        <span class="count">{{ count }}</span>\n        <button @click="increment">+</button>\n    </div>\n    <p class="computed">Double: {{ doubleCount }}</p>\n</div>`,
+                    script: `<!-- Script -->\nvar data = {\n    title: "Simple Counter",\n    count: 0,\n    increment: function() { this.count++; },\n    decrement: function() { this.count--; },\n    computed: {\n        doubleCount: function() { return this.count * 2; }\n    }\n};`,
+                    style: `<!-- Style -->\n#app { text-align: center; font-family: system-ui; padding: 50px; }\n.counter { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 30px 0; }\nbutton { width: 50px; height: 50px; font-size: 24px; border-radius: 25px; border: none; background: #6366f1; color: white; cursor: pointer; }\nbutton:hover { background: #4f46e5; }\n.count { font-size: 48px; font-weight: bold; width: 80px; }\n.computed { color: #666; font-size: 1.2rem; }`
+                },
+                visibility: {
+                    name: 'Conditional Rendering',
+                    features: ['Conditional Visibility (:show)', 'Reactive Booleans'],
+                    template: `<!-- Template -->\n<div id="app">\n    <button @click="toggle">\n        {{ isVisible ? "Hide Secret" : "Show Secret" }}\n    </button>\n    <div class="box" :show="isVisible">\n        <h2>🎉 You found the secret!</h2>\n        <p>This DOM node's display property is reactive.</p>\n    </div>\n</div>`,
+                    script: `<!-- Script -->\nvar data = {\n    isVisible: false,\n    toggle: function() {\n        this.isVisible = !this.isVisible;\n    }\n};`,
+                    style: `<!-- Style -->\n#app { text-align: center; padding: 50px; font-family: system-ui; }\nbutton { padding: 12px 24px; background: #111; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-bottom: 20px; }\n.box { background: #ecfdf5; border: 2px dashed #10b981; padding: 30px; border-radius: 12px; display: inline-block; }\nh2 { color: #047857; margin: 0 0 10px 0; }`
+                }
+            }
         };
     },
     computed: {
         statusColor() {
-            if (this.previewError) return 'bg-red-500';
-            return 'bg-green-500';
+            if (this.previewError) return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
+            if (this.statusText === 'Compiling...') return 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30';
+            return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
         },
+        highlightedCode() {
+            let code = this.codeContent || '';
+            // Basic escaping to prevent HTML injection in the pre tag
+            code = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // Highlight Teloce Mustaches {{ var }}
+            code = code.replace(/\{\{(.*?)\}\}/g, '<span class="text-yellow-600 dark:text-yellow-400">{{$1}}</span>');
+            
+            // Highlight SFC HTML Comments
+            code = code.replace(/&lt;!--(.*?)--&gt;/g, '<span class="text-gray-400 dark:text-gray-500 italic">&lt;!--$1--&gt;</span>');
+            
+            // Highlight HTML Tags and Directives
+            code = code.replace(/&lt;(\/?[a-z0-9-]+)(.*?)&gt;/gi, (match, p1, p2) => {
+                // Inside tags, highlight Teloce directives (@click, :model, etc)
+                let attrs = p2
+                    .replace(/([@:][a-zA-Z0-9.-]+)=/g, '<span class="text-indigo-600 dark:text-indigo-400 font-bold">$1</span>=')
+                    .replace(/([a-zA-Z0-9.-]+)=/g, '<span class="text-blue-500 dark:text-blue-300">$1</span>=') // normal attributes
+                    .replace(/"([^"]*)"/g, '<span class="text-green-600 dark:text-green-400">"$1"</span>');
+                return `&lt;<span class="text-pink-600 dark:text-pink-400">${p1}</span>${attrs}&gt;`;
+            });
+            
+            // Basic JS highlighting inside script block (naive approach for speed)
+            if (code.includes('var data = {') || code.includes('function')) {
+                code = code
+                    .replace(/\b(var|let|const|function|return|if|else)\b/g, '<span class="text-purple-600 dark:text-purple-400 font-bold">$1</span>')
+                    .replace(/\b(this|true|false)\b/g, '<span class="text-orange-500 dark:text-orange-300 font-bold">$1</span>');
+            }
+            
+            return code + '\n'; // Add extra newline to prevent scrolling cutoff
+        }
     },
     mounted() {
-        this.loadExample(this.selectedExample);
+        this.loadExample();
+        
+        // Listen for DevTools & Error messages from iframe
+        window.addEventListener('message', this.handleIframeMessage);
+    },
+    beforeUnmount() {
+        window.removeEventListener('message', this.handleIframeMessage);
     },
     methods: {
+        handleIframeMessage(e) {
+            if (e.data && e.data.source === 'teloce-playground') {
+                if (e.data.type === 'error') {
+                    this.previewError = e.data.payload.msg;
+                    this.previewSuggestion = e.data.payload.suggestion;
+                    this.statusText = 'Error';
+                }
+                else if (e.data.type === 'perf') {
+                    if (e.data.payload.fps !== undefined) this.devTools.fps = e.data.payload.fps;
+                    if (e.data.payload.effectCount !== undefined) this.devTools.effectCount += e.data.payload.effectCount;
+                }
+            }
+        },
+        syncScroll(e) {
+            // Keep the syntax highlighting pre aligned with textarea
+            const target = e.target;
+            const pre = target.previousElementSibling;
+            if (pre) {
+                pre.scrollTop = target.scrollTop;
+                pre.scrollLeft = target.scrollLeft;
+            }
+        },
         handleTab(e) {
             const textarea = e.target;
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
-            this.codeContent = this.codeContent.substring(0, start) + '  ' + this.codeContent.substring(end);
+            this.codeContent = this.codeContent.substring(0, start) + '    ' + this.codeContent.substring(end);
             this.$nextTick(() => {
-                textarea.selectionStart = textarea.selectionEnd = start + 2;
+                textarea.selectionStart = textarea.selectionEnd = start + 4;
+                this.onCodeChange();
             });
         },
         onCodeChange() {
             this.lineCount = this.codeContent.split('\n').length;
+            this.statusText = 'Editing...';
             clearTimeout(this.runTimeout);
             this.runTimeout = setTimeout(() => {
                 this.runCode();
-            }, 500);
+            }, 800);
         },
         loadExample() {
-            var example = this.examples[this.selectedExample];
+            const example = this.examples[this.selectedExample];
             if (!example) return;
 
-            var code = '<!-- Template -->\n' + example.template + '\n\n<!-- Script -->\n' + example.script + '\n\n<!-- Style -->\n' + example.style;
-            this.codeContent = code;
-            this.lineCount = code.split('\n').length;
-            this.statusDetail = 'Loaded: ' + example.name;
+            this.codeContent = `${example.template}\n\n${example.script}\n\n${example.style}`;
+            this.lineCount = this.codeContent.split('\n').length;
             this.runCode();
         },
         refreshPreview() {
             this.runCode();
         },
         runCode() {
-            var code = this.codeContent;
             this.previewError = null;
-            this.statusText = 'Running...';
-            this.statusDetail = 'Compiling...';
+            this.previewSuggestion = null;
+            this.statusText = 'Compiling...';
+            this.devTools.effectCount = 0;
 
             try {
-                var result = this.compileCode(code);
-                this.renderPreview(result);
-                this.statusText = 'Ready';
-                this.statusDetail = 'Preview updated';
-            } catch (error) {
-                this.previewError = error.message || 'Compilation error';
+                const html = this.compileSFC(this.codeContent);
+                this.renderPreview(html);
+                setTimeout(() => {
+                    if (!this.previewError) this.statusText = 'Active';
+                }, 100);
+            } catch (err) {
+                this.previewError = err.message;
                 this.statusText = 'Error';
-                this.statusDetail = error.message || 'Failed to compile';
             }
         },
-        compileCode(code) {
-            var templateMatch = code.match(/<!-- Template -->\s*([\s\S]*?)(?=<!-- Script -->|$)/);
-            var scriptMatch = code.match(/<!-- Script -->\s*([\s\S]*?)(?=<!-- Style -->|$)/);
-            var styleMatch = code.match(/<!-- Style -->\s*([\s\S]*?)$/);
+        compileSFC(code) {
+            const templateMatch = code.match(/<!-- Template -->\s*([\s\S]*?)(?=<!-- Script -->|$)/);
+            const scriptMatch = code.match(/<!-- Script -->\s*([\s\S]*?)(?=<!-- Style -->|$)/);
+            const styleMatch = code.match(/<!-- Style -->\s*([\s\S]*?)$/);
 
-            var template = templateMatch ? templateMatch[1].trim() : '';
-            var script = scriptMatch ? scriptMatch[1].trim() : 'var data = {};';
-            var style = styleMatch ? styleMatch[1].trim() : '';
+            const template = templateMatch ? templateMatch[1].trim() : '';
+            const script = scriptMatch ? scriptMatch[1].trim() : 'var data = {};';
+            const style = styleMatch ? styleMatch[1].trim() : '';
 
-            return this.buildHTML(template, script, style);
-        },
-        buildHTML(template, script, style) {
-            var escapedTemplate = template.replace(/`/g, '\\`').replace(/\$/g, '\\$');
-            var escapedScript = script.replace(/`/g, '\\`').replace(/\$/g, '\\$');
-            var escapedStyle = style.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+            // The absolute core of Teloce injected directly into the iframe preview
+            // This is a custom reactive system mimicking Vue/Teloce without a VDOM
+            const teloceEngineCore = `
+                (function() {
+                    window.sendToParent = (type, payload) => {
+                        window.parent.postMessage({ source: 'teloce-playground', type, payload }, '*');
+                    };
+                    window.reportError = (msg, suggestion) => {
+                        sendToParent('error', { msg, suggestion });
+                    };
+
+                    // --- Mini Reactivity System ---
+                    let activeEffect = null;
+                    const targetMap = new WeakMap();
+
+                    function track(target, key) {
+                        if (activeEffect) {
+                            let depsMap = targetMap.get(target);
+                            if (!depsMap) targetMap.set(target, (depsMap = new Map()));
+                            let dep = depsMap.get(key);
+                            if (!dep) depsMap.set(key, (dep = new Set()));
+                            dep.add(activeEffect);
+                        }
+                    }
+
+                    function trigger(target, key) {
+                        const depsMap = targetMap.get(target);
+                        if (!depsMap) return;
+                        const dep = depsMap.get(key);
+                        if (dep) {
+                            sendToParent('perf', { effectCount: dep.size });
+                            // Trigger all dependent effects
+                            [...dep].forEach(eff => eff());
+                        }
+                    }
+
+                    function reactive(target) {
+                        if (typeof target !== 'object' || target === null) return target;
+                        return new Proxy(target, {
+                            get(obj, key, receiver) {
+                                track(obj, key);
+                                const res = Reflect.get(obj, key, receiver);
+                                return typeof res === 'object' ? reactive(res) : res;
+                            },
+                            set(obj, key, value, receiver) {
+                                const oldVal = obj[key];
+                                const res = Reflect.set(obj, key, value, receiver);
+                                if (oldVal !== value) trigger(obj, key);
+                                return res;
+                            }
+                        });
+                    }
+
+                    function effect(fn) {
+                        const effectFn = () => {
+                            activeEffect = effectFn;
+                            try { fn(); }
+                            catch (e) { console.error(e); }
+                            finally { activeEffect = null; }
+                        };
+                        effectFn();
+                    }
+
+                    // --- Evaluator ---
+                    function evalInContext(exp, state, loopVars = {}) {
+                        const ctx = { ...state, ...loopVars };
+                        // Bind functions to state
+                        for (let k in state) {
+                            if (typeof state[k] === 'function') ctx[k] = state[k].bind(state);
+                        }
+                        
+                        try {
+                            const keys = Object.keys(ctx);
+                            const vals = Object.values(ctx);
+                            const fn = new Function(...keys, \`return (\${exp})\`);
+                            return fn(...vals);
+                        } catch(e) {
+                            if (e instanceof ReferenceError) {
+                                const token = e.message.split(' ')[0];
+                                reportError(\`ReferenceError: "\${token}" is not defined.\`, \`Did you forget to add "\${token}" to your data object?\`);
+                            }
+                            return undefined;
+                        }
+                    }
+
+                    // --- DOM Compiler (No VDOM, Direct Patching) ---
+                    function compile(node, state, loopVars = {}) {
+                        if (node.nodeType === 3) { // Text Node
+                            const originalText = node.textContent;
+                            if (originalText.includes('{{')) {
+                                effect(() => {
+                                    let newText = originalText;
+                                    const matches = originalText.match(/\\{\\{(.*?)\\}\\}/g);
+                                    if (matches) {
+                                        matches.forEach(m => {
+                                            const exp = m.replace(/[{}]/g, '').trim();
+                                            const val = evalInContext(exp, state, loopVars);
+                                            newText = newText.replace(m, val !== undefined ? val : '');
+                                        });
+                                    }
+                                    node.textContent = newText;
+                                });
+                            }
+                        } else if (node.nodeType === 1) { // Element Node
+                            
+                            // 1. Handle Keyed Loops (<for key="id" item="todo" in="todos">)
+                            if (node.tagName.toLowerCase() === 'for') {
+                                const itemKey = node.getAttribute('item');
+                                const listKey = node.getAttribute('in');
+                                const uidKey = node.getAttribute('key');
+                                const template = node.innerHTML;
+                                
+                                const parent = node.parentNode;
+                                const anchor = document.createComment('for-anchor');
+                                parent.replaceChild(anchor, node);
+
+                                effect(() => {
+                                    const list = evalInContext(listKey, state, loopVars) || [];
+                                    
+                                    // Remove old rendered items
+                                    let curr = anchor.nextSibling;
+                                    while (curr && curr._isTeloceLoopItem) {
+                                        const next = curr.nextSibling;
+                                        parent.removeChild(curr);
+                                        curr = next;
+                                    }
+
+                                    // Render new items
+                                    const fragment = document.createDocumentFragment();
+                                    list.forEach(item => {
+                                        const wrapper = document.createElement('div');
+                                        wrapper.style.display = 'contents';
+                                        wrapper._isTeloceLoopItem = true;
+                                        wrapper.innerHTML = template;
+                                        
+                                        const newVars = { ...loopVars, [itemKey]: item };
+                                        Array.from(wrapper.childNodes).forEach(c => compile(c, state, newVars));
+                                        fragment.appendChild(wrapper);
+                                    });
+                                    
+                                    parent.insertBefore(fragment, anchor.nextSibling);
+                                });
+                                return; // Stop walking this branch
+                            }
+
+                            // 2. Directives
+                            Array.from(node.attributes).forEach(attr => {
+                                const name = attr.name;
+                                const val = attr.value;
+
+                                if (name.startsWith('@')) {
+                                    // Event listeners: @click, @keyup.enter
+                                    const evtParts = name.slice(1).split('.');
+                                    const evtName = evtParts[0];
+                                    const modifier = evtParts[1];
+
+                                    node.addEventListener(evtName, (e) => {
+                                        if (modifier === 'enter' && e.key !== 'Enter') return;
+                                        if (modifier === 'prevent') e.preventDefault();
+
+                                        // Try calling as method first
+                                        if (typeof state[val] === 'function') {
+                                            if (loopVars[val]) loopVars[val](e); // In case it's in loop scope
+                                            else state[val](e);
+                                        } else {
+                                            // Execute as expression
+                                            evalInContext(val, state, loopVars);
+                                        }
+                                    });
+                                }
+                                else if (name === ':model') {
+                                    // Two way binding
+                                    node.addEventListener('input', e => {
+                                        // Simplified set for root properties
+                                        state[val] = e.target.value;
+                                    });
+                                    effect(() => {
+                                        node.value = evalInContext(val, state, loopVars);
+                                    });
+                                }
+                                else if (name === ':show') {
+                                    effect(() => {
+                                        node.style.display = evalInContext(val, state, loopVars) ? '' : 'none';
+                                    });
+                                }
+                                else if (name === ':class') {
+                                    effect(() => {
+                                        const clsObj = evalInContext(val, state, loopVars);
+                                        if (clsObj && typeof clsObj === 'object') {
+                                            for (let k in clsObj) {
+                                                if (clsObj[k]) node.classList.add(k);
+                                                else node.classList.remove(k);
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+
+                            // Recursively compile children
+                            Array.from(node.childNodes).forEach(c => compile(c, state, loopVars));
+                        }
+                    }
+
+                    // --- Bootstrapper ---
+                    window.teloce = {
+                        createApp(options) {
+                            return {
+                                mount(selector) {
+                                    const root = document.querySelector(selector);
+                                    if (!root) return reportError(\`Selector "\${selector}" not found.\`, "Ensure your template has a <div id='app'> matching the mount target.");
+                                    
+                                    const stateObj = { ...options };
+                                    const computedObj = options.computed || {};
+                                    delete stateObj.computed;
+
+                                    const state = reactive(stateObj);
+
+                                    // Wire up computed properties to reactive state
+                                    for (let key in computedObj) {
+                                        effect(() => {
+                                            state[key] = computedObj[key].call(state);
+                                        });
+                                    }
+
+                                    compile(root, state);
+
+                                    // Setup FPS loop for DevTools
+                                    let frames = 0, lastTime = performance.now();
+                                    function loop() {
+                                        frames++;
+                                        const now = performance.now();
+                                        if (now - lastTime >= 1000) {
+                                            sendToParent('perf', { fps: frames });
+                                            frames = 0;
+                                            lastTime = now;
+                                        }
+                                        requestAnimationFrame(loop);
+                                    }
+                                    loop();
+                                }
+                            };
+                        }
+                    };
+                })();
+            `;
 
             return `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teloce Playground</title>
-    <style>` + escapedStyle + `</style>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            padding: 20px;
-            background: #fff;
-            color: #333;
-        }
-        #app { max-width: 100%; }
-    </style>
+    <title>Teloce Runtime</title>
+    <style>${style}</style>
 </head>
 <body>
-    ` + escapedTemplate + `
-
+    ${template}
     <script>
-        var userData = {};
+        // Inject Core Engine
+        ${teloceEngineCore}
+        
+        // Execute User Script
         try {
-            var fn = new Function("return " + ` + JSON.stringify(escapedScript) + `);
-            var result = fn();
-            userData = result || {};
-        } catch(e) {
-            console.warn("Script parse error:", e);
-        }
-
-        var state = {};
-        for (var key in userData) {
-            if (userData.hasOwnProperty(key)) {
-                state[key] = userData[key];
+            ${script}
+            // Auto mount if data exists
+            if (typeof data !== 'undefined') {
+                teloce.createApp(data).mount('#app');
             }
+        } catch(e) {
+            window.reportError(e.message, "Syntax error in your script block.");
         }
-
-        // Initialize preview render loop
-        console.log("Teloce Playground Initialized with State:", state);
     </script>
 </body>
 </html>`;
         },
-        renderPreview(htmlContent) {
-            var iframe = this.$refs.previewIframe;
+        renderPreview(html) {
+            const iframe = this.$refs.previewIframe;
             if (!iframe) return;
-            var doc = iframe.contentDocument || iframe.contentWindow.document;
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
             doc.open();
-            doc.write(htmlContent);
+            doc.write(html);
             doc.close();
-        },
-    },
+        }
+    }
 };
 
-// Add this line at the very end of Playground.js
 export { PlaygroundPage };
