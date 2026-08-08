@@ -7,7 +7,7 @@ var blogPosts = [
         slug: 'introducing-teloce',
         title: 'Introducing Teloce',
         excerpt: 'A new way to build frontends for Python applications. Teloce brings reactive UI development to Flask, Django, and FastAPI developers.',
-        date: 'January 1, 2024',
+        date: 'Angust 8,2026',
         category: 'Announcements',
         readTime: '5 min read',
         content: `
@@ -31,17 +31,17 @@ var blogPosts = [
         `,
     },
     {
-        slug: 'teloce-v1-0-0-released',
-        title: 'Teloce v1.0.0 Released',
+        slug: 'teloce-v0.3.0-released',
+        title: 'Teloce v0.3.0 Released',
         excerpt: 'We are excited to announce the first stable release of Teloce! This marks a major milestone for the project.',
-        date: 'January 15, 2024',
+        date: 'Angust 8,2026',
         category: 'Announcements',
         readTime: '3 min read',
         content: `
             <h2>A Major Milestone</h2>
             <p>Today we're thrilled to announce the stable release of Teloce v1.0.0! This release represents thousands of hours of work and marks the project's readiness for production use.</p>
 
-            <h2>What's New in v1.0.0</h2>
+            <h2>What's New in v0.3.0</h2>
             <ul>
                 <li>Stable reactivity system with Signals</li>
                 <li>Keyed loops for fast list rendering</li>
@@ -63,7 +63,7 @@ var blogPosts = [
         slug: 'building-flask-app-with-teloce',
         title: 'Building a Flask App with Teloce',
         excerpt: 'Step-by-step guide to building a full-stack application with Flask and Teloce.',
-        date: 'January 20, 2024',
+        date: 'Angust 8,2026',
         category: 'Tutorials',
         readTime: '8 min read',
         content: `
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         slug: 'creating-custom-directives',
         title: 'Creating Custom Directives',
         excerpt: 'Learn how to extend Teloce with custom directives for your specific use cases.',
-        date: 'January 25, 2024',
+        date: 'Angust 8,2026',
         category: 'Tutorials',
         readTime: '6 min read',
         content: `
@@ -242,7 +242,7 @@ app.use(MarkdownPlugin);</code></pre>
         slug: 'teloce-community-spotlight',
         title: 'Community Spotlight: Projects using Teloce',
         excerpt: 'Highlighting amazing projects built with Teloce by the community.',
-        date: 'March 1, 2024',
+        date: 'Angust 8,2026',
         category: 'Community',
         readTime: '4 min read',
         content: `
