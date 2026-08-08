@@ -1,5 +1,7 @@
 # Teloce Website
 
+author: ALdane Hutchinson
+
 > The official **Teloce** website — a modern **Single Page Application (SPA)** built with **Vue 3** and **Tailwind CSS**.
 
 The Teloce website serves as the public-facing platform for the **Teloce** TypeScript template engine. It provides everything users need in one place, including documentation, a blog, community resources, an interactive playground, and code examples.
