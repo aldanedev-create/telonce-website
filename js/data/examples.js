@@ -97,7 +97,7 @@ teloce.createApp('#app', {
             <li>{{ item.name }}</li>
         </for>
     </ul>
-    <p if="error" class="error">{{ error }}</p>
+    <p  if="error" class="error">{{ error }}</p>
 </div>
         `,
         script: `
