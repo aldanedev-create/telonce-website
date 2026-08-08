@@ -97,7 +97,7 @@ teloce.createApp('#app', {
             <li>{{ item.name }}</li>
         </for>
     </ul>
-    <p v-if="error" class="error">{{ error }}</p>
+    <p if="error" class="error">{{ error }}</p>
 </div>
         `,
         script: `
@@ -147,7 +147,7 @@ teloce.createApp('#app', {
             {{ submitting ? 'Submitting...' : 'Submit' }}
         </button>
     </form>
-    <p v-if="submitted" class="success">✅ Form submitted successfully!</p>
+    <p if="submitted" class="success">✅ Form submitted successfully!</p>
 </div>
         `,
         script: `
