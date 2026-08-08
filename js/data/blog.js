@@ -158,7 +158,7 @@ teloce.registerDirective('focus', {
 });
 
 // use it in your template
-&lt;input v-focus /&gt;</code></pre>
+&lt;input telonce-focus /&gt;</code></pre>
 
             <h2>Directive Lifecycle Hooks</h2>
             <ul>
