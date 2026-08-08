@@ -1,5 +1,11 @@
 # Teloce Website
 
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/aldanedev-create/telonce/main/assets/telonce.png" alt="telonce logo "
+   width="200"/>
+</p>
+
 author: ALdane Hutchinson
 
 > The official **Teloce** website — a modern **Single Page Application (SPA)** built with **Vue 3** and **Tailwind CSS**.
