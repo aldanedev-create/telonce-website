@@ -14,7 +14,8 @@ const docsData = {
                     <p>There are several ways to install Teloce depending on your needs.</p>
                     <h2>CDN (Recommended for most Python projects)</h2>
                     <p>Simply add this script tag to your HTML:</p>
-                    <code-block language="html" code='<script src="https://cdn.teloce.dev/teloce.min.js"><\/script>'></code-block>
+                    <code-block language="html" code='<script src="https://cdn.jsdelivr.net/npm/teloce@0.3.0/dist/teloce.global.min.js
+"><\/script>'></code-block>
                     <p>No npm, no Node.js, no build tools — just one script tag.</p>
                     <h2>npm</h2>
                     <p>For advanced users who want to use build tools:</p>
@@ -35,7 +36,8 @@ const docsData = {
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdn.teloce.dev/teloce.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/teloce@0.3.0/dist/teloce.global.min.js
+"></script>
 </head>
 <body>
     <div id="app">
