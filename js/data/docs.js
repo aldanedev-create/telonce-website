@@ -5,7 +5,7 @@
 
 const docsData = {
     'getting-started': {
-        title: 'Getting Started',
+        title: 'Getting Started❤️',
         pages: {
             installation: {
                 title: 'Installation',
